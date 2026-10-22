@@ -275,6 +275,9 @@ export function createSessionInbox(options: { archived?: boolean } = {}) {
       [archivedAt === undefined ? "inbox-sessions" : "inbox-archived-sessions", entry.conn],
       (current) => current && [session, ...current],
     )
+    // The project tree lists archived sessions too, so both indexes behind it must refresh.
+    void queryClient.invalidateQueries({ queryKey: ["home-sessions"] })
+    void queryClient.invalidateQueries({ queryKey: ["home-archived-sessions"] })
   }
 
   // The pending request anywhere in the session's family, for views that answer it inline.

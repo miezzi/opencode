@@ -4,6 +4,8 @@ import { createMediaQuery } from "@solid-primitives/media"
 import { ResizeHandle } from "@opencode/ui/resize-handle"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { prefersReducedMotion } from "@opencode/ui/motion"
+import { Sidebar } from "@/sidebar/sidebar"
+import { useSidebar } from "@/sidebar/state"
 import { Titlebar } from "@/shell/titlebar/titlebar"
 import { usePlatform } from "@/runtime/platform/platform"
 import { ToastRegion } from "@/shell/notifications/toast"
@@ -12,7 +14,7 @@ import { useSettingsSurface } from "@/settings/surface"
 import { useSettings } from "@/settings/model"
 import { PluginServerCover } from "@/runtime/plugin/server-shell"
 import { PluginSlot } from "@/runtime/plugin/render"
-import { COMMAND_SEARCH_ID, useCommand } from "@/shell/commands/command"
+import { COMMAND_SEARCH_ID, type CommandOption, useCommand } from "@/shell/commands/command"
 import { useLanguage } from "@/runtime/i18n/language"
 import { useGlobal } from "@/runtime/server/runtime"
 import { useServers } from "@/runtime/server/registry"
@@ -35,6 +37,16 @@ type SidebarPose = { closed: number; peek: number | undefined }
 
 export const sidebarToggleCommand = { id: "sidebar.toggle", keybind: "mod+shift+b" }
 
+// The left column holds the tab sidebar over the project tree. Both share its width; the tree keeps the minimum.
+const COLUMN_MIN = 220
+
+const COLUMN_MAX = 560
+
+const COLUMN_MIN_TABS_ONLY = 136
+
+// Keeps the tab section from eating the tree, and the tree from collapsing while the divider is dragged.
+const COLUMN_TREE_MIN = 180
+
 export default function Layout(props: ParentProps) {
   const platform = usePlatform()
   const settings = useSettingsSurface()
@@ -45,15 +57,17 @@ export default function Layout(props: ParentProps) {
   const global = useGlobal()
   const servers = useServers()
   const tabs = useTabs()
+  const appSidebar = useSidebar()
   const mobile = createMediaQuery("(max-width: 767px)")
+  const wide = createMediaQuery("(min-width: 1024px)")
 
   const [state, setState] = createStore<{
-    tabsWidth: number
+    columnMount: HTMLElement | undefined
     tabsMount: HTMLElement | undefined
     tabsAside: HTMLElement | undefined
     tabsPanel: HTMLElement | undefined
   }>({
-    tabsWidth: 276,
+    columnMount: undefined,
     tabsMount: undefined,
     tabsAside: undefined,
     tabsPanel: undefined,
@@ -61,11 +75,29 @@ export default function Layout(props: ParentProps) {
 
   const verticalTabs = () => preferences.appearance.tabLayout() !== "horizontal" && !mobile()
 
-  const toggleSidebar = () => preferences.appearance.setSidebarOpen(!preferences.appearance.sidebarOpen())
+  // One flag for the whole column: the tab section and the tree show or hide together.
+  const columnOpen = () => preferences.appearance.sidebarOpen()
+  // The tree below the tabs folds on its own, so the tabs keep their width without taking the whole column away.
+  const treeAvailable = () => wide()
+  const treeShown = () => treeAvailable() && appSidebar.state.treeOpen
+  const columnWidth = () => appSidebar.state.width
+  const columnHeight = () => state.tabsAside?.clientHeight ?? 800
+
+  const toggleSidebar = () => {
+    // A folded tree is the smallest the sidebar gets: the toggle brings it back before it hides the column.
+    if (treeAvailable() && !appSidebar.state.treeOpen) {
+      appSidebar.setTreeOpen(true)
+      preferences.appearance.setSidebarOpen(true)
+
+      return
+    }
+
+    preferences.appearance.setSidebarOpen(!columnOpen())
+  }
 
   // How far closed the docked sidebar is, and how far in its peek has it, undefined while it isn't peeking.
   const sidebar: SidebarPose = {
-    closed: preferences.appearance.sidebarOpen() ? 0 : 1,
+    closed: columnOpen() ? 0 : 1,
     peek: undefined,
   }
 
@@ -78,7 +110,7 @@ export default function Layout(props: ParentProps) {
   // A peek slides the contents in its own box, where docking slides them by sizing the aside. Reduced motion fades
   // them in place instead.
   const paintSidebarContents = () => {
-    const mount = state.tabsMount
+    const mount = state.columnMount
 
     if (!mount) return
     const peeking = sidebar.peek !== undefined
@@ -109,27 +141,27 @@ export default function Layout(props: ParentProps) {
   }
 
   const sidebarMotion = createPanelMotion({
-    open: preferences.appearance.sidebarOpen,
+    open: columnOpen,
     // The aside's real width moves main's edge with the sidebar's; its contents keep their width, pinned to that edge.
     paint: (closed) => {
       sidebar.closed = closed
       const aside = state.tabsAside
 
-      if (aside) aside.style.width = `${state.tabsWidth * (1 - closed)}px`
+      if (aside) aside.style.width = `${columnWidth() * (1 - closed)}px`
 
       // Dims the contents, background included, as they leave and brightens them as they arrive.
       paintSidebarContents()
       paintCollapsedSlots(closed)
     },
-    measure: () => measureSidebarToggles(state.tabsWidth * sidebarHidden()),
+    measure: () => measureSidebarToggles(columnWidth() * sidebarHidden()),
     // A dock from a peek already shows the sidebar, so reduced motion has nothing to fade in.
     element: () => (peek.handedOff() ? undefined : state.tabsPanel),
-    distance: () => state.tabsWidth,
+    distance: columnWidth,
   })
 
   const peek = createSidebarPeek({
-    available: () => verticalTabs() && !preferences.appearance.sidebarOpen() && !sidebarMotion.present(),
-    open: preferences.appearance.sidebarOpen,
+    available: () => verticalTabs() && !columnOpen() && !sidebarMotion.present(),
+    open: columnOpen,
     aside: () => state.tabsAside,
     panel: () => state.tabsPanel,
     paint: (shown) => {
@@ -141,7 +173,7 @@ export default function Layout(props: ParentProps) {
 
   guardClosingFocus({
     root: () => state.tabsAside,
-    closing: () => !preferences.appearance.sidebarOpen() && sidebarMotion.present(),
+    closing: () => !columnOpen() && sidebarMotion.present(),
     // The toggle that reopens the sidebar, outside it.
     target: () =>
       [...document.querySelectorAll<HTMLElement>('button[aria-controls="vertical-tabs-sidebar"]')].find(
@@ -149,18 +181,38 @@ export default function Layout(props: ParentProps) {
       ),
   })
 
-  command.register("sidebar", () =>
-    verticalTabs()
-      ? [
-          {
-            ...sidebarToggleCommand,
-            title: language.t("command.sidebar.toggle"),
-            category: language.t("command.category.view"),
-            onSelect: toggleSidebar,
-          },
-        ]
-      : [],
-  )
+  command.register("sidebar", () => {
+    const commands: CommandOption[] = []
+
+    if (verticalTabs() || treeAvailable())
+      commands.push({
+        ...sidebarToggleCommand,
+        title: language.t("command.sidebar.toggle"),
+        category: language.t("command.category.view"),
+        onSelect: toggleSidebar,
+      })
+
+    if (treeAvailable())
+      commands.push({
+        id: "sidebar.tree.toggle",
+        title: language.t("command.sidebar.tree.toggle"),
+        keywords: "minimize hide sidebar projects tree minimizar ocultar proyectos",
+        category: language.t("command.category.view"),
+        section: "navigation",
+        keybind: "f9",
+        // F9 isn't typing, so it should work with the composer focused too.
+        editable: true,
+        onSelect: () => {
+          const open = !appSidebar.state.treeOpen
+          appSidebar.setTreeOpen(open)
+
+          // Restoring the tree from a closed column brings the column back with it.
+          if (open) preferences.appearance.setSidebarOpen(true)
+        },
+      })
+
+    return commands
+  })
   // Every surface has a palette: routes with their own register under the same key, and the newest wins.
   command.register("palette", () => [
     {
@@ -232,18 +284,18 @@ export default function Layout(props: ParentProps) {
             data-tauri-drag-region
           />
         </Show>
-        <Show when={verticalTabs()}>
+        <Show when={verticalTabs() || treeShown()}>
           <aside
             id="vertical-tabs-sidebar"
             data-slot="vertical-tabs-sidebar"
-            data-state={preferences.appearance.sidebarOpen() ? "open" : "closed"}
+            data-state={columnOpen() ? "open" : "closed"}
             data-peek={peek.shown() ? "" : undefined}
-            style={{ "--sidebar-peek-width": `${state.tabsWidth}px` }}
+            style={{ "--sidebar-peek-width": `${columnWidth()}px` }}
             ref={(element) => setState("tabsAside", element)}
             class="relative z-10 h-full min-h-0 shrink-0"
           >
             {/* Skipped rather than display: none or inert, so neither direction restyles the sidebar's contents and
-                  a reopen reuses their layout. */}
+                a reopen reuses their layout. */}
             <div
               ref={(element) => setState("tabsPanel", element)}
               data-slot="vertical-tabs-panel"
@@ -257,31 +309,65 @@ export default function Layout(props: ParentProps) {
                 data-slot="vertical-tabs-peek-surface"
                 aria-hidden="true"
                 class="pointer-events-none absolute inset-y-0 end-0 bg-v2-background-bg-deep shadow-[var(--v2-elevation-floating)]"
-                style={{ width: `${state.tabsWidth}px` }}
+                style={{ width: `${columnWidth()}px` }}
               />
               <div
-                ref={(element) => setState("tabsMount", element)}
+                ref={(element) => setState("columnMount", element)}
                 data-slot="vertical-tabs-mount"
-                class="absolute inset-y-0 end-0 contain-strict will-change-[opacity] flex min-h-0 flex-col bg-v2-background-bg-deep pe-2.5 ps-4.5 pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]"
+                class="absolute inset-y-0 end-0 contain-strict will-change-[opacity] flex min-h-0 flex-col bg-v2-background-bg-deep pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]"
                 style={{
-                  width: `${state.tabsWidth}px`,
+                  width: `${columnWidth()}px`,
                   "padding-bottom": "max(10px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))",
                 }}
-              />
+              >
+                <Show when={verticalTabs()}>
+                  {/* The portal replaces its mount's class list, so the section keeps the padding and the height. */}
+                  <div
+                    data-slot="vertical-tabs-portal"
+                    class="flex min-h-0 flex-col pe-2.5 ps-4.5"
+                    classList={{ "flex-1": !treeShown() }}
+                    style={{
+                      height: treeShown()
+                        ? `min(${appSidebar.state.tabsHeight}px, calc(100% - ${COLUMN_TREE_MIN}px))`
+                        : undefined,
+                    }}
+                  >
+                    <div ref={(element) => setState("tabsMount", element)} class="flex min-h-0 flex-1 flex-col" />
+                  </div>
+                </Show>
+                <Show when={verticalTabs() && treeShown()}>
+                  <div class="relative h-0 shrink-0">
+                    <ResizeHandle
+                      direction="vertical"
+                      edge="end"
+                      size={appSidebar.state.tabsHeight}
+                      min={120}
+                      max={Math.max(140, columnHeight() - COLUMN_TREE_MIN)}
+                      onResize={(height) => appSidebar.setState("tabsHeight", height)}
+                    />
+                  </div>
+                </Show>
+                <Show when={treeAvailable()}>
+                  <div
+                    class="flex min-h-0 flex-1 flex-col"
+                    classList={{ "border-t border-v2-border-border-muted pt-1.5": verticalTabs() && treeShown() }}
+                    style={{ display: treeShown() ? undefined : "none" }}
+                  >
+                    <Sidebar />
+                  </div>
+                </Show>
+              </div>
             </div>
             {/* Takes the pointer while the sidebar closes, without restyling its contents. */}
-            <div
-              class="absolute inset-0 z-20"
-              classList={{ hidden: preferences.appearance.sidebarOpen() || !sidebarMotion.present() }}
-            />
-            <Show when={preferences.appearance.sidebarOpen()}>
+            <div class="absolute inset-0 z-20" classList={{ hidden: columnOpen() || !sidebarMotion.present() }} />
+            <Show when={columnOpen()}>
               <ResizeHandle
                 class="-end-1"
                 direction="horizontal"
-                size={state.tabsWidth}
-                min={136}
-                max={640}
-                onResize={(width) => setState("tabsWidth", width)}
+                size={columnWidth()}
+                min={treeShown() ? COLUMN_MIN : COLUMN_MIN_TABS_ONLY}
+                max={COLUMN_MAX}
+                onResize={(width) => appSidebar.setState("width", width)}
               />
             </Show>
           </aside>

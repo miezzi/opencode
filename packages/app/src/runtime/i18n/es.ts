@@ -314,6 +314,7 @@ export const dict = {
   "command.context.addSelection.description": "Añadir las líneas seleccionadas del archivo actual",
   "command.input.focus": "Enfocar entrada",
   "command.review.toggle": "Mostrar u ocultar revisión",
+  "command.sidebar.tree.toggle": "Mostrar u ocultar el árbol de proyectos",
   "command.message.previous": "Mensaje anterior",
   "command.message.previous.description": "Ir al mensaje de usuario anterior",
   "command.message.next": "Siguiente mensaje",
@@ -393,7 +394,6 @@ export const dict = {
   "provider.connect.toast.connected.title": "{{provider}} conectado",
   "provider.connect.toast.connected.description": "Los modelos de {{provider}} ahora están disponibles para usar.",
 
-
   "provider.disconnect.toast.disconnected.title": "{{provider}} desconectado",
   "provider.disconnect.toast.disconnected.description": "Los modelos de {{provider}} ya no están disponibles.",
 
@@ -454,7 +454,6 @@ export const dict = {
 
   "dialog.mcp.title": "Servidores MCP",
   "dialog.mcp.empty": "No hay servidores MCP configurados",
-
 
   "dialog.fork.empty": "No hay mensajes desde donde bifurcar",
 
@@ -615,6 +614,47 @@ export const dict = {
 
   "sidebar.settings": "Ajustes",
   "sidebar.help": "Ayuda",
+  "sidebar.minimize": "Minimizar sidebar",
+  "sidebar.focus": "Ir al sidebar",
+  "sidebar.reveal": "Ir a la sesión en el sidebar",
+  "sidebar.more": "+{{count}} más",
+  "sidebar.projects.empty": "Todavía no hay proyectos",
+  "sidebar.projects.showAll": "Mostrar {{count}} proyectos más",
+  "sidebar.projects.showActive": "Mostrar solo activos",
+  "sidebar.hidden.projects": "{{count}} proyectos ocultos",
+  "sidebar.search.placeholder": "Buscar proyectos, worktrees, sesiones",
+  "sidebar.search.command": "Buscar en el sidebar",
+  "sidebar.search.clear": "Limpiar búsqueda",
+  "sidebar.search.empty": "Sin coincidencias",
+  "sidebar.pinned": "Fijadas",
+  "sidebar.pin": "Fijar sesión",
+  "sidebar.unpin": "Quitar de fijadas",
+  "sidebar.time.today": "Hoy",
+  "sidebar.time.yesterday": "Ayer",
+  "sidebar.time.week": "Últimos 7 días",
+  "sidebar.time.fortnight": "Últimos 15 días",
+  "sidebar.time.month": "Últimos 30 días",
+  "sidebar.time.older": "Más viejas",
+  "sidebar.chat": "Ir al chat",
+  "sidebar.delete.worktree": "Borrar worktree…",
+  "sidebar.delete.title": "Borrar worktree",
+  "sidebar.delete.description":
+    "Ejecuta git worktree remove sobre {{directory}}. Las sesiones asociadas dejan de mostrarse en el sidebar.",
+  "sidebar.delete.force": "Forzar (descarta cambios sin commitear)",
+  "sidebar.delete.button": "Borrar",
+  "sidebar.delete.failed.title": "No se pudo borrar el worktree",
+  "sidebar.delete.failed.description": "Revisá si hay cambios sin commitear, o forzá el borrado.",
+  "sidebar.worktree.main": "principal",
+  "sidebar.hide.project": "Quitar proyecto del sidebar",
+  "sidebar.hide.worktree": "Quitar worktree del sidebar",
+  "sidebar.hide.session": "Quitar sesión del sidebar",
+  "sidebar.hidden.count": "{{count}} ocultos",
+  "sidebar.hidden.hint": "Click para restaurar todo lo oculto acá, o botón derecho para elegir uno por uno",
+  "sidebar.hidden.restoreAll": "Restaurar todo lo oculto",
+  "sidebar.hidden.restoreScope": "Restaurar todo en {{scope}}",
+  "sidebar.hidden.projects.title": "Proyectos ocultos",
+  "sidebar.hidden.restoreAllProjects": "Restaurar todos los proyectos ocultos",
+  "sidebar.hidden.none": "Todavía no hay nada oculto",
   "sidebar.project.recentSessions": "Sesiones recientes",
   "sidebar.project.clearNotifications": "Borrar notificaciones",
 

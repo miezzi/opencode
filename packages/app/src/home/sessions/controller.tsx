@@ -20,7 +20,7 @@ import { usePlatform } from "@/runtime/platform/platform"
 import { sessionLabel, sessionTitle } from "@/session/title"
 import { showToast } from "@/shell/notifications/toast"
 import { archiveHomeSession } from "./archive"
-import { homeSessionsQuery } from "./queries"
+import { homeArchivedSessionsQuery, homeSessionsQuery } from "./queries"
 import type { HomeController } from "../model"
 import { buildHomeSessionRecords, homeProjectForSession, homeSessionLocation, type HomeSessionRecord } from "./records"
 
@@ -57,6 +57,16 @@ export function createHomeSessionsController(home: HomeController) {
 
     return {
       ...homeSessionsQuery(conn, ctx),
+      enabled: !!ctx && ctx.sdk.connection.status() === "connected",
+    }
+  })
+
+  const archivedLoad = useQuery(() => {
+    const ctx = home.server.focusedContext()
+    const conn = home.server.focused()
+
+    return {
+      ...homeArchivedSessionsQuery(conn, ctx),
       enabled: !!ctx && ctx.sdk.connection.status() === "connected",
     }
   })
@@ -298,6 +308,10 @@ export function createHomeSessionsController(home: HomeController) {
     data: {
       records,
       groups,
+      /** Every indexed session for the focused server, before the project filter. */
+      indexed: indexedSessions,
+      /** Sessions archived on the focused server; the index excludes them. */
+      archived: () => archivedLoad.data?.() ?? [],
       loading: () => sessionLoad.isPending,
       searchRecords: allRecords,
     },

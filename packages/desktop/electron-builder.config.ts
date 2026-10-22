@@ -203,19 +203,26 @@ export function getConfig() {
 
   switch (channel) {
     case "dev": {
-      return {
+      const config: Configuration = {
         ...base,
         appId,
         productName: "OpenCode Dev",
-        publish: {
-          provider: "generic",
-          url: "https://opencode.ai/update/api/dev/desktop/opencode/",
-          channel: "latest",
-        },
         deb: { fpm: [...previewCompressionFpm("deb"), metainfoFpm(appId)] },
         rpm: {
           packageName: "opencode-dev",
           fpm: [rpmNoBuildIdLinksFpm, ...previewCompressionFpm("rpm"), metainfoFpm(appId)],
+        },
+      }
+
+      // A fork build pins its own AppImage: no update feed, so it can never be replaced by the upstream dev build.
+      if (process.env.OPENCODE_FORK === "1") return config
+
+      return {
+        ...config,
+        publish: {
+          provider: "generic",
+          url: "https://opencode.ai/update/api/dev/desktop/opencode/",
+          channel: "latest",
         },
       }
     }
