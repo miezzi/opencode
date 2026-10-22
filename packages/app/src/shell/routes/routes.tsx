@@ -1,6 +1,7 @@
 import { Route, useParams } from "@solidjs/router"
 import { createMemo, lazy, Show, Suspense, type ParentProps } from "solid-js"
 import { Home } from "@/home/route"
+import { HomeDataProvider } from "@/home/provider"
 import { ServerProvider } from "@/runtime/server/current"
 import { useGlobal } from "@/runtime/server/runtime"
 import { ServerConnection, useServers } from "@/runtime/server/registry"
@@ -10,6 +11,7 @@ import { ServerSignedOutPanel } from "@/session/server-unavailable-panel"
 import { sessionKeyOpen } from "@/shell/state/helpers"
 import { LayoutProvider } from "@/shell/state/layout"
 import { SettingsSurfaceProvider } from "@/settings/surface"
+import { SidebarProvider } from "@/sidebar/state"
 import Shell from "@/shell/shell"
 import { useTabs } from "@/shell/tabs/tabs"
 import { requireServerKey } from "./session"
@@ -131,7 +133,11 @@ function AppLayout(props: ParentProps) {
       <LayoutProvider open={open}>
         <SettingsSurfaceProvider>
           <PluginAttachment>
-            <Shell>{props.children}</Shell>
+            <HomeDataProvider>
+              <SidebarProvider>
+                <Shell>{props.children}</Shell>
+              </SidebarProvider>
+            </HomeDataProvider>
           </PluginAttachment>
         </SettingsSurfaceProvider>
       </LayoutProvider>

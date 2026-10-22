@@ -132,6 +132,18 @@ const icons = {
     body: `<path d="M2 2L2 18H5L6.5 8.5H18V5H9.5L7.5 2H2Z" fill="currentColor" fill-opacity="0.1"/>
 <path d="M5 18H18L19.5 8.5H18M5 18H2L2 2H7.5L9.5 5H18V8.5M5 18L6.5 8.5H18" stroke="currentColor" stroke-linecap="square"/>`,
   },
+  pin: {
+    viewBox: "0 0 16 16",
+    body: `<path d="M6 2.5h4M7 2.5v4.75L4.75 9.75v1.5h6.5v-1.5L9 7.25V2.5M8 11.25v2.25" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>`,
+  },
+  home: {
+    viewBox: "0 0 16 16",
+    body: `<path d="M2.5 7.25 8 2.5l5.5 4.75V13.5h-3.75V9.25h-3.5v4.25H2.5V7.25Z" stroke="currentColor" stroke-linejoin="round"/>`,
+  },
+  branch: {
+    viewBox: "0 0 16 16",
+    body: `<path d="M5.118 5.686V10.314M5.118 5.686C5.97 5.686 6.661 4.995 6.661 4.143C6.661 3.291 5.97 2.6 5.118 2.6C4.266 2.6 3.575 3.291 3.575 4.143C3.575 4.995 4.266 5.686 5.118 5.686ZM5.118 10.314C4.266 10.314 3.575 11.005 3.575 11.857C3.575 12.709 4.266 13.4 5.118 13.4C5.97 13.4 6.661 12.709 6.661 11.857M5.118 10.314C5.97 10.314 6.661 11.005 6.661 11.857M10.882 5.686C11.734 5.686 12.425 4.995 12.425 4.143C12.425 3.291 11.734 2.6 10.882 2.6C10.03 2.6 9.339 3.291 9.339 4.143C9.339 4.995 10.03 5.686 10.882 5.686ZM10.882 5.686V9.457C10.882 10.783 9.807 11.857 8.482 11.857H6.661" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>`,
+  },
   "magnifying-glass": {
     viewBox: "0 0 16 16",
     body: `<path d="M11.5 7C11.5 9.48528 9.48528 11.5 7 11.5C4.51472 11.5 2.5 9.48528 2.5 7C2.5 4.51472 4.51472 2.5 7 2.5C9.48528 2.5 11.5 4.51472 11.5 7Z" stroke="currentColor"/><path d="M13.5 13.5L10.5 10.5" stroke-linecap="round" stroke="currentColor"/>`,

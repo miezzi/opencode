@@ -7,8 +7,9 @@ import { useProjectNavigation } from "@/shell/project-navigation"
 import { createProviderTip, ProviderTip } from "@/providers/connect/tip"
 import { ServerProvider } from "@/runtime/server/current"
 import { useServers } from "@/runtime/server/registry"
+import { useSidebar } from "@/sidebar/state"
 import { ProjectLanding } from "./projects/landing"
-import { createHomeController } from "./model"
+import { useHomeData } from "./provider"
 import { createHomeProjectsController } from "./projects/controller"
 import { HomeUtilityNav } from "./projects/view"
 import { HomeProjects } from "./projects/region"
@@ -34,10 +35,9 @@ export function Home() {
 function HomeOverview() {
   const layout = useLayout()
   const settings = useSettings()
-  const home = createHomeController()
-  const projects = createHomeProjectsController(home)
-  const sessions = createHomeSessionsController(home)
-  const search = createHomeSessionSearchController(home, sessions, settings.appearance.navigationPrototype)
+  // The controllers live in the shell's HomeDataProvider: the sidebar lists the same projects and sessions on every
+  // screen, and creating them here as well would duplicate their session index and commands.
+  const { projects, sessions, search } = useHomeData()
 
   onMount(() => {
     // The navigation prototype has no search dialog, so Home's search field starts focused.
@@ -50,8 +50,6 @@ function HomeOverview() {
       sessions={sessions}
       search={search}
       searchInline={settings.appearance.navigationPrototype()}
-      // The sidebar already lists sessions in side tabs and List, so Home drops its project column there and picks
-      // the project from the search field instead. Top tabs have no sidebar and keep Home's column.
       projectScope={settings.appearance.navigationPrototype() && settings.appearance.tabLayout() === "vertical"}
       providerTip
     />
@@ -69,8 +67,16 @@ export function HomeView(props: {
   providerTip?: boolean
 }) {
   const mobile = createMediaQuery("(max-width: 767px)")
-
+  const wide = createMediaQuery("(min-width: 1024px)")
+  const settings = useSettings()
+  const sidebar = useSidebar()
   const scroll = createHomeScrollController(props.search.result.groups)
+  // The sidebar already lists every project; Home keeps its own column only where the sidebar is hidden.
+  // Home's column yields only while the tree below the tabs actually shows the same projects.
+  const showProjects = () =>
+    !mobile() &&
+    !props.projectScope &&
+    !(settings.appearance.sidebarOpen() && wide() && sidebar.state.treeOpen)
 
   return (
     <div
@@ -99,11 +105,12 @@ export function HomeView(props: {
                 ? "mx-auto grid min-h-full w-full max-w-[768px] grid-rows-[minmax(0,1fr)] px-3 lg:px-6"
                 : `
             mx-auto grid min-h-full w-full max-w-[1080px] grid-rows-[auto_minmax(0,1fr)] gap-4 px-3
-            max-md:grid-rows-[minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,720px)] lg:grid-rows-1 lg:gap-8 lg:px-6
+            max-md:grid-rows-[minmax(0,1fr)] lg:grid-rows-1 lg:gap-8 lg:px-6
+            ${showProjects() ? "lg:grid-cols-[280px_minmax(0,720px)]" : "lg:grid-cols-[minmax(0,720px)]"}
           `
             }
           >
-            <Show when={!mobile() && !props.projectScope}>
+            <Show when={showProjects()}>
               <HomeProjects projects={props.projects} scroll={scroll} />
             </Show>
             <HomeSessions

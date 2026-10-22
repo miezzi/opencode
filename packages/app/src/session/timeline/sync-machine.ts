@@ -32,6 +32,7 @@ export type TimelineSyncState =
       readonly assistantID: string
       readonly step: "pausing" | "loading"
       readonly pages: number
+      readonly pageLimit: number
       readonly waits: number
     }
   | { readonly status: "ready"; readonly target: TimelineSyncTarget; readonly attempt: number }
@@ -46,6 +47,11 @@ export type TimelineSyncEvent =
       readonly assistantID: string | undefined
       readonly needsParent: boolean
       readonly more: boolean
+      /**
+       * How many pages the leading turn may load. A turn whose changed-files summary is on needs its opening
+       * prompt, which can be many pages above the newest one.
+       */
+      readonly pageLimit: number
     }
   | { readonly type: "sync.failed"; readonly attempt: number; readonly error: object }
   | { readonly type: "sync.timed-out"; readonly attempt: number }
@@ -144,6 +150,7 @@ export function transitionTimelineSync(state: TimelineSyncState, event: Timeline
       assistantID: event.assistantID,
       step: "pausing",
       pages: 0,
+      pageLimit: event.pageLimit,
       waits: 0,
     })
   }
@@ -166,7 +173,7 @@ export function transitionTimelineSync(state: TimelineSyncState, event: Timeline
 
   if (event.type === "enrich.page-settled" && state.step === "loading") {
     // A failed page leaves the leading turn as it is; a later visit to the session resumes it.
-    if (!event.succeeded || state.pages + 1 >= LEADING_TURN_PAGE_LIMIT || !event.needsParent || !event.more)
+    if (!event.succeeded || state.pages + 1 >= state.pageLimit || !event.needsParent || !event.more)
       return ready(state.target, attempt)
 
     return pause({ ...state, attempt, step: "pausing", pages: state.pages + 1, waits: 0 })

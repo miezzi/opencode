@@ -1,6 +1,7 @@
 import { createEffect, createMemo, createSignal, onCleanup, untrack } from "solid-js"
 import type { SessionMessageInfo } from "@opencode/client/promise"
 import { useServer } from "@/runtime/server/current"
+import { useSettings } from "@/settings/model"
 import type { SessionModel } from "../model"
 import {
   createTimelineSyncState,
@@ -9,6 +10,7 @@ import {
   isTimelineSyncing,
   LEADING_TURN_LOAD_TIMEOUT_MS,
   LEADING_TURN_PAGE_DELAY_MS,
+  LEADING_TURN_PAGE_LIMIT,
   leadingTurnNeedsParent,
   resolveLeadingAssistant,
   sameTarget,
@@ -23,8 +25,14 @@ import {
 // The leading turn first seen in each transcript, kept across route remounts.
 const leadingAssistants = new WeakMap<SessionMessageInfo[], string>()
 
+// A turn's changed-files summary needs the prompt that opened it, so a turn that changed files is completed much
+// further than the default: long agent turns run past a handful of pages. The load is sequential and pauses between
+// pages, so the tail stays usable while it fills in.
+const LEADING_TURN_DIFF_PAGE_LIMIT = 20
+
 export function createTimelineModel(input: { session: Pick<SessionModel, "identity" | "history"> }) {
   const server = useServer()
+  const settings = useSettings()
   const data = server.ctx.data
   const [syncState, setSyncState] = createSignal(createTimelineSyncState())
   let syncTimer: ReturnType<typeof setTimeout> | undefined
@@ -65,7 +73,14 @@ export function createTimelineModel(input: { session: Pick<SessionModel, "identi
       }
 
       syncTimer = timer
-      Promise.all([data.session.message.sync(id), data.session.pending.sync(id)]).then(
+
+      // Desktop storage hydrates after the first render. Reading the setting before that would use its default and
+      // cap a long turn at the default page count, so wait for the persisted value before deciding how far to
+      // complete the turn.
+      const sync = () => Promise.all([data.session.message.sync(id), data.session.pending.sync(id)])
+      const settled = settings.ready.promise ? settings.ready.promise.catch(() => undefined).then(sync) : sync()
+
+      settled.then(
         () => {
           const messages = data.session.message.list(id)
           const assistantID = resolveLeadingAssistant(leadingAssistants, messages)
@@ -76,6 +91,7 @@ export function createTimelineModel(input: { session: Pick<SessionModel, "identi
             assistantID,
             needsParent: !!assistantID && leadingTurnNeedsParent(messages, assistantID),
             more: data.session.message.more(id),
+            pageLimit: settings.general.showTurnDiffs() ? LEADING_TURN_DIFF_PAGE_LIMIT : LEADING_TURN_PAGE_LIMIT,
           })
         },
         // The error boundary rethrows it, so a rejection without a value still needs one.

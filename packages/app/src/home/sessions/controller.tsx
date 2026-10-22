@@ -38,7 +38,13 @@ import { usePlatform } from "@/runtime/platform/platform"
 import { sessionLabel, sessionTitle } from "@/session/title"
 import { showToast } from "@/shell/notifications/toast"
 import { archiveHomeSession } from "./archive"
-import { homeSessionsQuery, lookupHomeSession, projectSessionDirectories, projectSessionsQuery } from "./queries"
+import {
+  homeArchivedSessionsQuery,
+  homeSessionsQuery,
+  lookupHomeSession,
+  projectSessionDirectories,
+  projectSessionsQuery,
+} from "./queries"
 import {
   HOME_SESSIONS_STALE_MS,
   INITIAL_HOME_SESSIONS_LOAD_STATE,
@@ -231,6 +237,16 @@ export function createHomeSessionsController(home: HomeController) {
   const scoped = useQuery(() =>
     projectSessionsQuery(home.server.focused(), home.server.focusedContext(), projectDirectories()),
   )
+
+  const archivedLoad = useQuery(() => {
+    const ctx = home.server.focusedContext()
+    const conn = home.server.focused()
+
+    return {
+      ...homeArchivedSessionsQuery(conn, ctx),
+      enabled: !!ctx && ctx.sdk.connection.status() === "connected",
+    }
+  })
 
   const indexedSessions = createMemo(() => {
     const ctx = home.server.focusedContext()
@@ -494,6 +510,10 @@ export function createHomeSessionsController(home: HomeController) {
       listView: createMemo(() => selectHomeSessionsListView(load(), groups().length > 0)),
       loading: () => selectHomeSessionsSearchLoading(load()),
       retry: () => dispatchLoad({ type: "retry" }),
+      /** Every indexed session for the focused server, before the project filter. */
+      indexed: indexedSessions,
+      /** Sessions archived on the focused server; the index excludes them. */
+      archived: () => archivedLoad.data?.() ?? [],
       searchRecords: allRecords,
     },
     platform: {

@@ -6,6 +6,7 @@ import {
   isTimelineReady,
   isTimelineSyncing,
   LEADING_TURN_BUSY_LIMIT,
+  LEADING_TURN_PAGE_LIMIT,
   leadingTurnNeedsParent,
   resolveLeadingAssistant,
   timelineSyncError,
@@ -56,6 +57,7 @@ function enrich(input: {
     assistantID,
     needsParent: !!assistantID && leadingTurnNeedsParent(messages, assistantID),
     more: input.more(),
+    pageLimit: LEADING_TURN_PAGE_LIMIT,
   })
 
   function dispatch(event: TimelineSyncEvent) {
@@ -111,6 +113,7 @@ describe("timeline sync", () => {
       assistantID: "msg_latest",
       needsParent: true,
       more: true,
+      pageLimit: LEADING_TURN_PAGE_LIMIT,
     })
 
     let pauses = 0
@@ -168,7 +171,7 @@ describe("timeline sync", () => {
     expect(isTimelineReady(timedOut.state, target, () => false)).toBe(true)
 
     const late: TimelineSyncEvent[] = [
-      { type: "sync.succeeded", attempt: loading.attempt, assistantID: "msg_1", needsParent: true, more: true },
+      { type: "sync.succeeded", attempt: loading.attempt, assistantID: "msg_1", needsParent: true, more: true, pageLimit: LEADING_TURN_PAGE_LIMIT },
       { type: "sync.failed", attempt: loading.attempt, error: new Error("late") },
     ]
 
@@ -185,6 +188,7 @@ describe("timeline sync", () => {
       assistantID: "msg_latest",
       needsParent: true,
       more: true,
+      pageLimit: LEADING_TURN_PAGE_LIMIT,
     }).state
 
     expect(pausing).toMatchObject({ status: "enriching", step: "pausing" })
@@ -213,6 +217,7 @@ describe("timeline sync", () => {
       assistantID: "msg_latest",
       needsParent: true,
       more: true,
+      pageLimit: LEADING_TURN_PAGE_LIMIT,
     }).state
 
     expect(transitionTimelineSync(pausing, { type: "target.changed", target: other }).effects).toEqual([

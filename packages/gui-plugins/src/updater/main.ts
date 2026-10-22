@@ -13,8 +13,10 @@ const setup: Plugin.MainSetup = async (ctx) => {
   const build = ctx.app
   const lifecycle = builtin.lifecycle
   // electron-updater reads its feed from app-update.yml. Distro packages that update the app themselves (such as the
-  // AUR's opencode-desktop-bin) delete it, and every check would then fail.
-  const enabled = build.packaged && existsSync(join(process.resourcesPath, "app-update.yml"))
+  // AUR's opencode-desktop-bin) delete it, and every check would then fail. The fork never ships a feed (OPENCODE_FORK),
+  // so it stays off even if one appears.
+  const enabled =
+    build.packaged && !import.meta.env.OPENCODE_FORK && existsSync(join(process.resourcesPath, "app-update.yml"))
   // Holds no resources, so it needs no cleanup.
   const context = logContext(ctx.log.write)
   const runPromise = Effect.runPromiseWith(context)
