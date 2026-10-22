@@ -23,6 +23,7 @@ import { TextShimmer } from "@opencode/ui/text-shimmer"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { Loader } from "@opencode/ui/loader"
 import { displayName } from "@opencode/ui/project-avatar"
+import { useCommand } from "@/shell/commands/command"
 import { useServers } from "@/runtime/server/registry"
 import { useLanguage } from "@/runtime/i18n/language"
 import { Persist, persisted } from "@/runtime/persistence/storage"
@@ -50,6 +51,7 @@ export function SidebarInbox() {
   const language = useLanguage()
   const dialog = useDialog()
   const servers = useServers()
+  const command = useCommand()
   const inbox = createSessionInbox({ archived: true })
 
   const exporter = createSessionExporter()
@@ -147,6 +149,47 @@ export function SidebarInbox() {
     if (!ready() || !selectedWorking()) return
     setState("workingExpanded", true)
   })
+
+  // The Inbox replaces the vertical tab strip, so the same unread session shortcuts cycle its rows. Done and Failed
+  // are the finished rows no client has viewed yet.
+  const cycleUnread = (offset: -1 | 1) => {
+    const list = sections().inbox
+    const current = list.findIndex((entry) => inbox.selected(entry))
+    const start = current === -1 ? (offset === 1 ? -1 : 0) : current
+
+    for (let step = 1; step <= list.length; step++) {
+      const entry = list[(start + offset * step + list.length) % list.length]
+
+      if (!entry || (entry.status !== "done" && entry.status !== "failed")) continue
+
+      inbox.open(entry)
+
+      requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLElement>(`[data-inbox-session="${CSS.escape(entry.session.id)}"]`)
+          ?.scrollIntoView({ block: "nearest" })
+      })
+
+      return
+    }
+  }
+
+  command.register("sidebar-inbox", () => [
+    {
+      id: "session.previous.unseen",
+      category: language.t("command.category.session"),
+      title: language.t("command.session.previous.unseen"),
+      keybind: "shift+alt+arrowup",
+      onSelect: () => cycleUnread(-1),
+    },
+    {
+      id: "session.next.unseen",
+      category: language.t("command.category.session"),
+      title: language.t("command.session.next.unseen"),
+      keybind: "shift+alt+arrowdown",
+      onSelect: () => cycleUnread(1),
+    },
+  ])
 
   // The client only refreshes `time.idle` for loaded sessions when a run ends, so load every working one.
   createEffect(() => {
@@ -625,6 +668,7 @@ export function InboxSessionCard(props: {
         tabIndex={navigation ? (navigation() === id ? 0 : -1) : 0}
         aria-current={props.selected ? "page" : undefined}
         data-slot="sidebar-inbox-item"
+        data-inbox-session={props.entry.session.id}
         data-status={status()}
         data-state={props.selected ? "active" : undefined}
         class="group flex h-[54px] w-full shrink-0 flex-col gap-1.5 rounded-[6px] p-2 text-start hover:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none focus-visible:bg-v2-overlay-simple-overlay-hover data-[state=active]:bg-v2-overlay-simple-overlay-pressed"

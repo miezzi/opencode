@@ -3,7 +3,7 @@ import { useDialog } from "@opencode/ui/context/dialog"
 import { Button } from "@opencode/ui/button"
 import { DialogFooter, DialogHeader, DialogTitleGroup, Dialog } from "@opencode/ui/dialog"
 import { prefersReducedMotion } from "@opencode/ui/motion"
-import { hashKey, onlineManager, useQueryClient } from "@tanstack/solid-query"
+import { hashKey, onlineManager, useQuery, useQueryClient } from "@tanstack/solid-query"
 import {
   type Accessor,
   createEffect,
@@ -44,7 +44,7 @@ import { usePlatform } from "@/runtime/platform/platform"
 import { sessionLabel, sessionTitle } from "@/session/title"
 import { showToast } from "@/shell/notifications/toast"
 import { archiveHomeSession } from "./archive"
-import { homeSessionsQuery } from "./queries"
+import { homeArchivedSessionsQuery, homeSessionsQuery } from "./queries"
 import {
   HOME_SESSIONS_STALE_MS,
   INITIAL_HOME_SESSIONS_LOAD_STATE,
@@ -269,6 +269,16 @@ export function createHomeSessionsController(home: HomeController) {
       setScopedSessions(results.flatMap((result) => (result.status === "fulfilled" ? result.value.data : [])))
     })
     onCleanup(() => controller.abort())
+  })
+
+  const archivedLoad = useQuery(() => {
+    const ctx = home.server.focusedContext()
+    const conn = home.server.focused()
+
+    return {
+      ...homeArchivedSessionsQuery(conn, ctx),
+      enabled: !!ctx && ctx.sdk.connection.status() === "connected",
+    }
   })
 
   const indexedSessions = createMemo(() => {
@@ -533,6 +543,10 @@ export function createHomeSessionsController(home: HomeController) {
       listView: createMemo(() => selectHomeSessionsListView(load(), groups().length > 0)),
       loading: () => selectHomeSessionsSearchLoading(load()),
       retry: () => dispatchLoad({ type: "retry" }),
+      /** Every indexed session for the focused server, before the project filter. */
+      indexed: indexedSessions,
+      /** Sessions archived on the focused server; the index excludes them. */
+      archived: () => archivedLoad.data?.() ?? [],
       searchRecords: allRecords,
     },
     platform: {

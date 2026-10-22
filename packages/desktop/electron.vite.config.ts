@@ -55,6 +55,9 @@ export default defineConfig(async ({ command }) => {
       define: {
         // Local renderer/server mode still uses the dev application identity and updater policy.
         "import.meta.env.OPENCODE_CHANNEL": JSON.stringify(channel === "local" ? "dev" : channel),
+        // The fork shares the dev app id but must never self-update onto the upstream dev channel, which would replace
+        // it with a build without the sidebar (and a CLI that restarts the shared service).
+        "import.meta.env.OPENCODE_FORK": JSON.stringify(process.env.OPENCODE_FORK === "1"),
       },
       build: {
         minify: command === "build",
