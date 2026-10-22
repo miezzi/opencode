@@ -1,22 +1,21 @@
 import { ScrollView } from "@opencode/ui/scroll-view"
 import { createMediaQuery } from "@solid-primitives/media"
 import { Show } from "solid-js"
-import { createHomeController } from "./model"
-import { createHomeProjectsController } from "./projects/controller"
+import { useHomeData } from "./provider"
+import { useSidebar } from "@/sidebar/state"
 import { HomeUtilityNav } from "./projects/view"
 import { HomeProjects } from "./projects/region"
 import { createHomeScrollController } from "./scroll"
-import { createHomeSessionSearchController } from "./sessions/search"
-import { createHomeSessionsController } from "./sessions/controller"
 import { HomeSessions } from "./sessions/region"
 
 export function Home() {
   const mobile = createMediaQuery("(max-width: 767px)")
-  const home = createHomeController()
-  const projects = createHomeProjectsController(home)
-  const sessions = createHomeSessionsController(home)
-  const search = createHomeSessionSearchController(home, sessions)
+  const wide = createMediaQuery("(min-width: 1024px)")
+  const { projects, sessions, search } = useHomeData()
+  const sidebar = useSidebar()
   const scroll = createHomeScrollController(sessions.data.groups)
+  // The sidebar already lists every project; Home keeps its own column only where the sidebar is hidden.
+  const showProjects = () => !mobile() && !(sidebar.state.open && wide())
 
   return (
     <div
@@ -42,10 +41,11 @@ export function Home() {
         <div
           class={`
             mx-auto grid min-h-full w-full max-w-[1080px] grid-rows-[auto_minmax(0,1fr)] gap-4 px-3
-            max-md:grid-rows-[minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,720px)] lg:grid-rows-1 lg:gap-8 lg:px-6
+            max-md:grid-rows-[minmax(0,1fr)] lg:grid-rows-1 lg:gap-8 lg:px-6
+            ${showProjects() ? "lg:grid-cols-[280px_minmax(0,720px)]" : "lg:grid-cols-[minmax(0,720px)]"}
           `}
         >
-          <Show when={!mobile()}>
+          <Show when={showProjects()}>
             <HomeProjects projects={projects} scroll={scroll} />
           </Show>
           <HomeSessions sessions={sessions} search={search} scroll={scroll} />

@@ -304,6 +304,8 @@ export function createHomeSessionsController(home: HomeController) {
     data: {
       records,
       groups,
+      /** Every indexed session for the focused server, before the project filter. */
+      indexed: indexedSessions,
       loading: () => sessionLoad.isPending,
       searchRecords: allRecords,
     },

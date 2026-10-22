@@ -2,6 +2,9 @@ import { Show, Suspense, type ParentProps } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createMediaQuery } from "@solid-primitives/media"
 import { ResizeHandle } from "@opencode/ui/resize-handle"
+import { HomeDataProvider } from "@/home/provider"
+import { Sidebar } from "@/sidebar/sidebar"
+import { SidebarProvider } from "@/sidebar/state"
 import { Titlebar } from "@/shell/titlebar/titlebar"
 import { usePlatform } from "@/runtime/platform/platform"
 import { ToastRegion } from "@/shell/notifications/toast"
@@ -46,46 +49,51 @@ export default function Layout(props: ParentProps) {
         }}
       >
         <Titlebar verticalTabs={verticalTabs() ? { mount: state.tabsMount } : undefined} />
-        <div class="flex flex-1 min-h-0 min-w-0 flex-row">
-          <Show when={verticalTabs()}>
-            <aside
-              ref={(element) => setState("tabsMount", element)}
-              data-slot="vertical-tabs-sidebar"
-              class="relative flex h-full min-h-0 shrink-0 flex-col bg-v2-background-bg-deep pe-0.5 ps-2.5 pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]"
-              style={{
-                width: `${state.tabsWidth}px`,
-                "padding-bottom": "max(10px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))",
-              }}
-            >
-              <ResizeHandle
-                class="-end-2"
-                direction="horizontal"
-                size={state.tabsWidth}
-                min={140}
-                max={520}
-                onResize={(width) => setState("tabsWidth", width)}
-              />
-            </aside>
-          </Show>
-          {/* Size containment collapses percentage-height descendants in WebKit. */}
-          <main
-            class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col items-start contain-content"
-            style={{
-              "padding-top": bottomTitlebar() ? "env(safe-area-inset-top, 0px)" : "0px",
-              "padding-bottom":
-                bottomTitlebar() || settings.active()
-                  ? "0px"
-                  : "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
-              "--settings-bottom-inset": bottomTitlebar()
-                ? "40px"
-                : "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
-            }}
-          >
-            <ExtensionServerCover>
-              <Suspense>{props.children}</Suspense>
-            </ExtensionServerCover>
-          </main>
-        </div>
+        <HomeDataProvider>
+          <SidebarProvider>
+            <div class="flex flex-1 min-h-0 min-w-0 flex-row">
+              <Sidebar />
+              <Show when={verticalTabs()}>
+                <aside
+                  ref={(element) => setState("tabsMount", element)}
+                  data-slot="vertical-tabs-sidebar"
+                  class="relative flex h-full min-h-0 shrink-0 flex-col bg-v2-background-bg-deep pe-0.5 ps-2.5 pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]"
+                  style={{
+                    width: `${state.tabsWidth}px`,
+                    "padding-bottom": "max(10px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))",
+                  }}
+                >
+                  <ResizeHandle
+                    class="-end-2"
+                    direction="horizontal"
+                    size={state.tabsWidth}
+                    min={140}
+                    max={520}
+                    onResize={(width) => setState("tabsWidth", width)}
+                  />
+                </aside>
+              </Show>
+              {/* Size containment collapses percentage-height descendants in WebKit. */}
+              <main
+                class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col items-start contain-content"
+                style={{
+                  "padding-top": bottomTitlebar() ? "env(safe-area-inset-top, 0px)" : "0px",
+                  "padding-bottom":
+                    bottomTitlebar() || settings.active()
+                      ? "0px"
+                      : "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
+                  "--settings-bottom-inset": bottomTitlebar()
+                    ? "40px"
+                    : "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
+                }}
+              >
+                <ExtensionServerCover>
+                  <Suspense>{props.children}</Suspense>
+                </ExtensionServerCover>
+              </main>
+            </div>
+          </SidebarProvider>
+        </HomeDataProvider>
         <ExtensionSlot at="window.bottom" input={{}} />
         <ToastRegion />
         <UploadToastHost />
