@@ -285,7 +285,7 @@ export namespace Timeline {
     const leading: Notice[] = []
     let current: Turn | undefined
     // Everything since the last idle marker is one turn, including prompts steered in meanwhile.
-    let execution: { opener: string; turn: Turn; files: Set<string> } | undefined
+    let execution: { opener: string; turn: Turn; files: Set<string>; start?: string; end?: string } | undefined
 
     messages.forEach((message) => {
       if (isNotice(message)) {
@@ -323,7 +323,14 @@ export namespace Timeline {
 
         // The summary follows the turn's last prompt, after any failure the marker reports.
         // Sorted like the diff route's git order, so the list keeps its order when the diffs arrive.
-        if (turnDiffs && execution?.files.size)
+        // A step records the files it changed, but a background tool or a shell command can leave that list empty
+        // while the turn's snapshots still differ. The diff route compares those snapshots, so ask it whenever the
+        // turn moved either way.
+        const changed =
+          execution !== undefined &&
+          (execution.files.size > 0 || (execution.start !== undefined && execution.start !== execution.end))
+
+        if (turnDiffs && changed && execution)
           execution.turn.entries.push({
             type: "diff",
             message,
@@ -336,6 +343,12 @@ export namespace Timeline {
       }
 
       if (message.type !== "assistant") return
+
+      if (execution) {
+        if (message.snapshot?.start && execution.start === undefined) execution.start = message.snapshot.start
+        if (message.snapshot?.end) execution.end = message.snapshot.end
+      }
+
       message.snapshot?.files?.forEach((file) => execution?.files.add(file))
       const existing = current?.user ? current : undefined
 
