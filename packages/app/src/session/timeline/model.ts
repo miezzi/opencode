@@ -1,6 +1,7 @@
 import { createMemo, createResource, type Accessor } from "solid-js"
 import type { SessionMessageInfo } from "@opencode/client/promise"
 import { useData } from "@/runtime/server/current"
+import { useSettings } from "@/settings/model"
 import { getSessionMessageHandoff } from "@/session/handoff"
 import type { SessionModel } from "../model"
 
@@ -8,12 +9,18 @@ const leadingTurnPageDelay = 200
 
 const leadingTurnPageLimit = 3
 
+// A turn's changed-files summary needs the prompt that opened it, so a turn that changed files is completed much
+// further than the default: long agent turns run past a handful of pages. The load is sequential and pauses between
+// pages, so the tail stays usable while it fills in.
+const leadingTurnDiffPageLimit = 20
+
 // The store preserves the transcript array across prepends and tab switches, and replaces it on eviction.
 // Remember the original turn so interrupted enrichment can resume without chasing newly prepended turns.
 const enrichmentTurns = new WeakMap<SessionMessageInfo[], string>()
 
 export function createTimelineModel(input: { session: Pick<SessionModel, "identity" | "history" | "ownership"> }) {
   const data = useData()
+  const settings = useSettings()
 
   const [resource] = createResource(
     () => input.session.identity.sessionID(),
@@ -28,7 +35,7 @@ export function createTimelineModel(input: { session: Pick<SessionModel, "identi
         loading: () => data.session.message.loading(id),
         loadMore: () => data.session.message.loadMore(id),
         pause: () => new Promise((resolve) => setTimeout(resolve, leadingTurnPageDelay)),
-        maxPages: leadingTurnPageLimit,
+        maxPages: settings.general.showTurnDiffs() ? leadingTurnDiffPageLimit : leadingTurnPageLimit,
       }).catch(() => undefined)
 
       return id

@@ -22,3 +22,22 @@ export function homeSessionsQuery(conn: ServerConnection.Any | undefined, ctx: S
     select: selectSessions,
   })
 }
+
+/** Archived sessions still belong to the project tree; the index leaves them out. */
+export function homeArchivedSessionsQuery(conn: ServerConnection.Any | undefined, ctx: ServerCtx | undefined) {
+  return queryOptions({
+    queryKey: ["home-archived-sessions", conn] as const,
+    queryFn: ctx
+      ? ({ signal }) =>
+          ctx.sdk.api.session
+            .list({ limit: 50, order: "desc", parentID: null, archived: true }, { signal })
+            .then((response) => response.data)
+      : skipToken,
+    retry: false,
+    staleTime: 30_000,
+    gcTime: Infinity,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    select: selectSessions,
+  })
+}
