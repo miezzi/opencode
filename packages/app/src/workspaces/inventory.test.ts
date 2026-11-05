@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test"
 import { QueryClient } from "@tanstack/solid-query"
 import type { WorktreeDirectory } from "@opencode/client/promise"
-import { createWorktreeInventory, withWorktreeInventory, worktreeInventoryKey } from "./inventory"
+import {
+  createWorktreeInventory,
+  sameWorktreeInventory,
+  withWorktreeInventory,
+  worktreeInventoryKey,
+} from "./inventory"
 import { ServerScope } from "@/runtime/server/scope"
 import { normalizeProjectInfo, updateProjectInfo } from "@/runtime/server/global-sync/utils"
 
@@ -147,5 +152,15 @@ describe("withWorktreeInventory", () => {
 
     expect(updated).toMatchObject({ worktree: "/repo", worktrees: cached })
     expect(withWorktreeInventory(updated, cached)).toMatchObject({ name: "After", sandboxes: ["/repo/feature"] })
+  })
+
+  test("recognizes the inventory it already applied", () => {
+    const worktrees = [{ directory: "/repo" }, { directory: "/repo/feature", strategy: "git" }]
+    const project = withWorktreeInventory(normalizeProjectInfo(metadata), worktrees)
+
+    expect(sameWorktreeInventory(project, worktrees)).toBe(true)
+    expect(sameWorktreeInventory(project, [{ directory: "/repo" }])).toBe(false)
+    expect(sameWorktreeInventory(project, [{ directory: "/repo" }, { directory: "/repo/feature" }])).toBe(false)
+    expect(sameWorktreeInventory({ ...project, sandboxes: [] }, worktrees)).toBe(false)
   })
 })
