@@ -27,7 +27,12 @@ import { toggleMcp } from "./global-sync/mcp"
 import { createConnectionSync, reconnectOrder } from "./server-sync/connection"
 import { usePlatform } from "@/runtime/platform/platform"
 import type { Data } from "@opencode/client/solid"
-import { createWorktreeInventory, withWorktreeInventory, worktreeInventoryViewKey } from "@/workspaces/inventory"
+import {
+  createWorktreeInventory,
+  sameWorktreeInventory,
+  withWorktreeInventory,
+  worktreeInventoryViewKey,
+} from "@/workspaces/inventory"
 
 type GlobalStore = {
   path: Path
@@ -99,6 +104,10 @@ function createServerSyncContextInner(serverSDK: ServerSDK, data: Data) {
     queryClient,
     api: () => serverSDK.api.worktree,
     updated: (projectID, items) => {
+      const current = globalStore.project.find((project) => project.id === projectID)
+
+      if (current && sameWorktreeInventory(current, items)) return
+
       setGlobalStore("project", (projects) =>
         projects.map((project) => (project.id === projectID ? withWorktreeInventory(project, items) : project)),
       )

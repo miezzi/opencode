@@ -814,6 +814,7 @@ export const dict = {
   "sidebar.delete.failed.title": "Could not delete the worktree",
   "sidebar.delete.failed.description": "Check for uncommitted changes, or force the deletion.",
   "sidebar.worktree.main": "main",
+  "sidebar.worktree.refresh": "Refresh worktrees",
   "sidebar.hide.project": "Remove project from sidebar",
   "sidebar.hide.worktree": "Remove worktree from sidebar",
   "sidebar.hide.session": "Remove session from sidebar",

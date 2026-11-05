@@ -504,12 +504,19 @@ export function Sidebar() {
     }
   })
 
-  // Worktree inventories load on demand; the tree needs them to tell main apart from a worktree, and to drop
-  // worktrees removed from disk. Coming back to the window is when an external removal has to be noticed.
+  // The tree needs each saved inventory to tell main apart from a worktree and to drop directories the server no
+  // longer records. `list` only reads what is already saved, so repeating it when the window regains focus stays
+  // cheap. `refresh` walks every checkout and boots the project's location, which marks the project active and
+  // reorders the tree, so it is a manual action: the tree's context menu.
   const requested = new Set<string>()
   const [revision, setRevision] = createSignal(0)
+  let listedAt = 0
 
   const refreshInventories = () => {
+    // A desktop focus also reports visibilitychange; one pass per return to the window is enough.
+    if (Date.now() - listedAt < 1_000) return
+
+    listedAt = Date.now()
     requested.clear()
     setRevision((value) => value + 1)
   }
@@ -535,11 +542,19 @@ export function Sidebar() {
       if (requested.has(key)) continue
 
       requested.add(key)
-      // `list` reads the saved inventory; `refresh` is what notices a worktree removed from disk.
       void context.sync.worktrees.list(project.project.id).catch(() => undefined)
-      void context.sync.worktrees.refresh(project.project.id).catch(() => undefined)
     }
   })
+
+  // Disk discovery boots the project's location, so the tree only asks for it from that project's context menu.
+  const refreshWorktrees = (project: SidebarProject) => {
+    const context = home.server.focusedContext()
+    const projectID = project.project.id
+
+    if (!context || !projectID || context.sdk.connection.status() !== "connected") return
+
+    void context.sync.worktrees.refresh(projectID).catch(() => undefined)
+  }
 
   const openSession = (record: HomeSessionRecord, background: boolean) => {
     sessions.session.open(record.session, { background })
@@ -777,6 +792,14 @@ export function Sidebar() {
     const target = menuTarget()
 
     return target.kind === "worktree" ? target.worktree : undefined
+  })
+
+  const menuProject = createMemo(() => {
+    const target = menuTarget()
+
+    if (target.kind === "project") return target.project
+
+    if (target.kind === "worktree") return target.project
   })
 
   const menuHiddenCount = createMemo(() => menuHidden().worktrees.length + menuHidden().sessions.length)
@@ -1437,6 +1460,17 @@ export function Sidebar() {
                   {(action) => (
                     <>
                       <Menu.Item onSelect={action().run}>{action().label}</Menu.Item>
+                      <Menu.Separator />
+                    </>
+                  )}
+                </Show>
+
+                <Show when={menuProject()}>
+                  {(project) => (
+                    <>
+                      <Menu.Item onSelect={() => refreshWorktrees(project())}>
+                        {language.t("sidebar.worktree.refresh")}
+                      </Menu.Item>
                       <Menu.Separator />
                     </>
                   )}
