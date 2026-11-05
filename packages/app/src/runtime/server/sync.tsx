@@ -17,7 +17,12 @@ import { normalizeProjectInfo, updateProjectInfo } from "./global-sync/utils"
 import { persisted } from "@/runtime/persistence/storage"
 import { createConnectionSync } from "./server-sync/connection"
 import type { Data } from "@opencode/client/solid"
-import { createWorktreeInventory, withWorktreeInventory, worktreeInventoryViewKey } from "@/workspaces/inventory"
+import {
+  createWorktreeInventory,
+  sameWorktreeInventory,
+  withWorktreeInventory,
+  worktreeInventoryViewKey,
+} from "@/workspaces/inventory"
 
 function createServerSyncContextInner(serverSDK: ServerSDK, data: Data) {
   const language = useLanguage()
@@ -58,6 +63,10 @@ function createServerSyncContextInner(serverSDK: ServerSDK, data: Data) {
     queryClient,
     api: () => serverSDK.api.worktree,
     updated: (projectID, items) => {
+      const current = globalStore.project.find((project) => project.id === projectID)
+
+      if (current && sameWorktreeInventory(current, items)) return
+
       setGlobalStore("project", (projects) =>
         projects.map((project) => (project.id === projectID ? withWorktreeInventory(project, items) : project)),
       )

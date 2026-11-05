@@ -646,6 +646,7 @@ export const dict = {
   "sidebar.delete.failed.title": "No se pudo borrar el worktree",
   "sidebar.delete.failed.description": "Revisá si hay cambios sin commitear, o forzá el borrado.",
   "sidebar.worktree.main": "principal",
+  "sidebar.worktree.refresh": "Actualizar worktrees",
   "sidebar.hide.project": "Quitar proyecto del sidebar",
   "sidebar.hide.worktree": "Quitar worktree del sidebar",
   "sidebar.hide.session": "Quitar sesión del sidebar",

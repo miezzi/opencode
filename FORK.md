@@ -110,8 +110,9 @@ cd opencode && bun install && ./script/fork-build.sh
 ## Current limits
 
 - The tree only groups sessions into worktrees the project inventory still reports: a worktree removed
-  from disk (even `rm -rf` without `git worktree prune`) disappears on the next inventory refresh, which
-  happens when the window regains focus. Its sessions stay reachable from Home and search.
+  from disk (even `rm -rf` without `git worktree prune`) disappears after "Refresh worktrees" in the
+  project's context menu, not when the window regains focus (focus only re-reads the saved inventory,
+  so it never reorders the tree). Its sessions stay reachable from Home and search.
 - The first run expands the most recently active project; projects without sessions stay behind a
   "Show N more projects" row until you ask for them.
 - Hidden below 1024px (the mobile layout keeps its own navigation).
@@ -127,7 +128,9 @@ cd opencode && bun install && ./script/fork-build.sh
   worktrees and sessions; on a worktree, only its hidden sessions; on empty space (or the hidden-projects
   row) it lists hidden projects. Each scope restores one item or everything in that scope. A project with
   hidden rows shows "N hidden", and clicking it restores that project. A session's menu also offers
-  "Delete session…", which asks for confirmation in the same dialog Home uses.
+  "Delete session…", which asks for confirmation in the same dialog Home uses. A project's or worktree's
+  menu offers "Refresh worktrees" for worktrees added or removed outside the app; focus never scans the
+  disk on its own, so coming back to the window cannot reorder the tree.
 - The search field under the nav filters projects, worktrees and sessions as you type; matches expand
   automatically and `Esc` clears it.
 - Sessions inside a worktree are grouped by age: Today, Yesterday, Last 7 days, Last 15 days, Last 30 days
