@@ -26,6 +26,26 @@ export function withWorktreeInventory(project: Project, worktrees: readonly Work
   }
 }
 
+// Rewriting an identical inventory replaces every project object and rebuilds the tree, which drops hover and
+// pointer state while the sidebar is in use. Compare everything `withWorktreeInventory` would derive and leave
+// the store alone when nothing changed.
+export function sameWorktreeInventory(project: Project, next: readonly WorktreeDirectory[]) {
+  if (!project.worktrees || project.worktrees.length !== next.length) return false
+
+  const sameWorktrees = project.worktrees.every(
+    (item, index) => item.directory === next[index]?.directory && item.strategy === next[index]?.strategy,
+  )
+
+  if (!sameWorktrees) return false
+
+  const sandboxes = next.flatMap((item) => (sameDirectory(project.worktree, item.directory) ? [] : [item.directory]))
+
+  return (
+    (project.sandboxes?.length ?? 0) === sandboxes.length &&
+    (project.sandboxes ?? []).every((directory, index) => directory === sandboxes[index])
+  )
+}
+
 // Reads use saved inventory; explicit demand also discovers external worktree changes.
 export function createWorktreeInventory(input: {
   scope: ServerScope
