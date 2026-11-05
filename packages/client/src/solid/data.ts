@@ -93,6 +93,23 @@ const messagePageLimit = 20
 // Trailing window for event bursts that each ask for the same refetch.
 export const settleMs = 150
 
+type MessageSnapshot = NonNullable<SessionMessageAssistant["snapshot"]>
+
+// Mirrors the server's message projector: a finished step records both its end tree and the paths it changed, so
+// the timeline can show a turn's summary before (or without) asking the diff route.
+const projectTerminalSnapshot = (
+  assistant: { snapshot?: MessageSnapshot },
+  event: { readonly snapshot?: string; readonly files?: readonly string[] },
+) => {
+  if (!event.snapshot && !event.files) return
+
+  assistant.snapshot = {
+    ...assistant.snapshot,
+    end: event.snapshot,
+    files: event.files ? [...event.files] : undefined,
+  }
+}
+
 // Global MCP elicitations temporarily use "global" instead of a real session ID, so the
 // server cannot recover their Location when settling them. Preserve the event Location
 // until MCP elicitations carry session ownership.
@@ -1017,7 +1034,7 @@ export function createData(config: CreateDataInput) {
           assistant.native = event.data.native
           assistant.cost = event.data.cost
           assistant.tokens = event.data.tokens
-          if (event.data.snapshot) assistant.snapshot = { ...assistant.snapshot, end: event.data.snapshot }
+          projectTerminalSnapshot(assistant, event.data)
         })
         return
       }
@@ -1039,6 +1056,7 @@ export function createData(config: CreateDataInput) {
             assistant.cost = event.data.cost
             assistant.tokens = event.data.tokens
           }
+          projectTerminalSnapshot(assistant, event.data)
         })
         return
       case "session.text.started":
