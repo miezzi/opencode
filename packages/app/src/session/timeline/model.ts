@@ -27,6 +27,11 @@ export function createTimelineModel(input: { session: Pick<SessionModel, "identi
     async (id) => {
       if (!id) return
       const owner = input.session.ownership.capture()
+
+      // Desktop storage hydrates after the first render. Reading the setting before that would use its default and
+      // cap a long turn at three pages, so wait for the persisted value before deciding how far to complete it.
+      if (settings.ready.promise) await settings.ready.promise.catch(() => undefined)
+
       await Promise.all([data.session.message.sync(id), data.session.pending.sync(id)])
       await enrichLeadingTurn({
         current: owner.current,
