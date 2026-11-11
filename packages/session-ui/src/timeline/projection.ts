@@ -1,6 +1,7 @@
 import type {
   ModelRef,
   SessionMessageAssistant,
+  SessionMessageAssistantTool,
   SessionMessageIdle,
   SessionMessageInfo,
   SessionMessageShell,
@@ -349,7 +350,7 @@ export namespace Timeline {
         if (message.snapshot?.end) execution.end = message.snapshot.end
       }
 
-      message.snapshot?.files?.forEach((file) => execution?.files.add(file))
+      changedFiles(message).forEach((file) => execution?.files.add(file))
       const existing = current?.user ? current : undefined
 
       if (existing?.user) {
@@ -673,6 +674,35 @@ export namespace Timeline {
       content,
     }))
   }
+}
+
+const changedFiles = (message: SessionMessageAssistant): readonly string[] =>
+  message.snapshot?.files ??
+  message.content.flatMap((content) => (content.type === "tool" ? toolChangedFiles(content) : []))
+
+const editToolNames = new Set(["apply_patch", "edit", "patch", "write"])
+
+// A turn's changed-file summary normally comes from snapshots, which only exist for Git locations. Fall back to the
+// files a completed edit tool names, so a folder without a repository still lists what the turn wrote.
+function toolChangedFiles(tool: SessionMessageAssistantTool): readonly string[] {
+  if (!editToolNames.has(tool.name) || tool.state.status !== "completed") return []
+
+  const recorded = tool.state.metadata?.files
+
+  if (Array.isArray(recorded)) {
+    const files = recorded.flatMap((file) => {
+      if (!Predicate.hasProperty(file, "file") || !Predicate.isString(file.file)) return []
+
+      return [file.file]
+    })
+
+    if (files.length > 0) return files
+  }
+
+  if (tool.name !== "edit" && tool.name !== "write") return []
+  const file = tool.state.input.path
+
+  return Predicate.isString(file) ? [file] : []
 }
 
 const MAX_RETRY_AFTER_MS = 45 * 86_400_000
