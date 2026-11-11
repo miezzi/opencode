@@ -1552,6 +1552,26 @@ export function Sidebar() {
       <div data-sidebar-footer class="mt-auto flex shrink-0 flex-col px-2 pb-1">
         <button
           type="button"
+          data-action="sidebar-archived"
+          class="
+            flex h-7.5 min-w-0 w-full shrink-0 cursor-default items-center gap-2 rounded-[6px] px-2 text-left
+            text-[13px] leading-text-compact text-v2-text-text-faint [font-weight:440]
+            transition-[background-color,color] duration-[120ms] ease-in-out
+            hover:bg-v2-background-bg-layer-02/60 hover:text-v2-text-text-base
+            focus-visible:bg-v2-background-bg-layer-03 focus-visible:text-v2-text-text-base focus-visible:outline-none
+          "
+          title={language.t("sidebar.inbox.archived.title")}
+          onClick={async () => {
+            const { DialogSessionSearch } = await import("@/shell/commands/session-search")
+
+            void dialog.show(() => <DialogSessionSearch archived />)
+          }}
+        >
+          <Icon name="archive" size="small" class="shrink-0 text-v2-icon-icon-muted" />
+          <span class="min-w-0 flex-1 truncate">{language.t("sidebar.inbox.archived.title")}</span>
+        </button>
+        <button
+          type="button"
           data-action="sidebar-tree-minimize"
           class="
             flex h-7.5 min-w-0 w-full shrink-0 cursor-default items-center gap-2 rounded-[6px] px-2 text-left

@@ -142,6 +142,9 @@ cd opencode && bun install && ./script/fork-build.sh
   finished, asked a question or raised a permission request (up to 5, then "+N more").
 - A worktree's context menu can delete it for real (`git worktree remove`, with an optional force that
   discards uncommitted changes), next to the hide action.
+- Archived sessions stay in the tree, dimmed, and their context menu offers "Unarchive". The tree loads
+  the 50 most recently archived sessions; the "Archived sessions" row in the sidebar footer opens a
+  server-side search over every archived session, and opening one restores it.
 - `Ctrl+B` focuses the sidebar, `Ctrl+Shift+G` jumps from the open chat to that session's row (opening
   and unhiding the tree on the way), `Ctrl+Shift+F` jumps to its search field, `Ctrl+Alt+A` jumps to the
   Active list (expanded, first running or attention session focused) and `Ctrl+Shift+M` focuses the chat
