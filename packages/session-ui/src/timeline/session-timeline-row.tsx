@@ -954,7 +954,8 @@ export function createSessionTimelineRowRenderer(input: {
 
   function TurnDiff(props: { row: TimelineRow.TurnDiff; onSizeChange?: () => void }) {
     const render = ToolRegistry.render("patch") ?? GenericTool
-    // Until the diff loads, and if it fails, list the paths the turn's steps recorded, without change counts.
+    // Until the diff loads, and whenever the location has nothing to diff, list the paths the turn's steps recorded,
+    // without change counts.
     const turn = () => ({ sessionID: input.sessionID(), from: props.row.from })
     const state = createMemo(() => data.turnDiff?.state(turn()))
 
@@ -964,8 +965,19 @@ export function createSessionTimelineRowRenderer(input: {
       return current?.status === "ready" ? current.diffs : undefined
     }
 
+    // Sessions outside Git have no snapshots to diff, so the route answers with nothing even though the turn named
+    // files. Keep the recorded paths in that case instead of hiding the summary the projection already built.
+    const loaded = () => (diffs()?.length ? diffs() : undefined)
+    const displayPath = (path: string) => {
+      const normalized = path.replaceAll("\\", "/")
+      const directory = data.directory.replaceAll("\\", "/")
+      const prefix = directory ? (directory.endsWith("/") ? directory : `${directory}/`) : undefined
+
+      return prefix && normalized.startsWith(prefix) ? normalized.slice(prefix.length) : normalized
+    }
+    const paths = () =>
+      [...new Set((loaded()?.map((diff) => diff.file) ?? props.row.files).map(displayPath))].sort()
     const failed = () => state()?.status === "failed"
-    const paths = () => diffs()?.map((diff) => diff.file) ?? props.row.files
     const showAllKey = () => `turn-diff:${props.row.messageID}`
     const showAll = () => input.disclosure.value(showAllKey()) === true
     const limit = <T,>(items: readonly T[]) => (showAll() ? items : items.slice(0, turnDiffFileLimit))
@@ -982,7 +994,7 @@ export function createSessionTimelineRowRenderer(input: {
             <span class="shrink-0 text-14-medium text-v2-text-text-base tabular-nums">
               {i18n.plural("ui.sessionTurn.diffs.changed", paths().length)}
             </span>
-            <DiffChanges changes={[...(diffs() ?? [])]} />
+            <DiffChanges changes={[...(loaded() ?? [])]} />
             <Show when={failed()}>
               <span
                 data-slot="session-turn-diffs-error"
@@ -1019,8 +1031,8 @@ export function createSessionTimelineRowRenderer(input: {
             component={render}
             tool="patch"
             input={{}}
-            metadata={{ files: limit(diffs() ?? []) }}
-            pendingFiles={diffs() ? undefined : limit(props.row.files)}
+            metadata={{ files: limit(loaded() ?? []) }}
+            pendingFiles={loaded() ? undefined : limit(paths())}
             status="completed"
             fileOpen={(path: string) => input.disclosure.value(fileKey(path))}
             onFileOpenChange={(path: string, open: boolean) => input.disclosure.set(fileKey(path), open)}

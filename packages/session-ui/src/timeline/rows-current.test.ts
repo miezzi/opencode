@@ -1806,4 +1806,45 @@ describe("current session timeline rows", () => {
       ),
     ).toBe(false)
   })
+
+  test("lists the files a completed edit tool changed when the location has no snapshots", () => {
+    const source = [
+      { id: "msg_write", type: "user", text: "write the report", time: { created: 1 } },
+      {
+        id: "msg_written",
+        type: "assistant",
+        agent: "build",
+        model: { id: "model", providerID: "provider" },
+        content: [
+          storyTool("tool_write", "write", "completed", {
+            path: "/scratch/docs/report.md",
+            content: "findings",
+          }),
+          storyTool("tool_running", "edit", "running", {
+            path: "/scratch/docs/other.md",
+            oldString: "a",
+            newString: "b",
+          }),
+        ],
+        time: { created: 2, completed: 3 },
+      },
+      { id: "msg_idle", type: "idle", outcome: "succeeded", time: { created: 4 } },
+    ] satisfies SessionMessageInfo[]
+
+    const rows = createTimelineProjection({
+      sessionMessages: source,
+      status: { type: "idle" },
+      reasoningMode: "compact",
+      turnDiffs: true,
+    }).rows
+
+    expect(rows.filter((row) => Predicate.isTagged(row, "TurnDiff"))).toEqual([
+      new TimelineRow.TurnDiff({
+        userMessageID: "msg_write",
+        messageID: "msg_idle",
+        from: "msg_write",
+        files: ["/scratch/docs/report.md"],
+      }),
+    ])
+  })
 })
