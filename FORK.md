@@ -87,14 +87,15 @@ The short, step-by-step operator guide (Spanish, also copied to `~/Apps/OpenCode
 ```bash
 git fetch origin --tags
 cat /opt/OpenCode/resources/opencode-cli.version   # the version the official app runs
-git rebase v2.2.5              # the matching tag; `origin/dev` when the tag does not exist yet
+git rebase v2.2.7              # the matching tag; `origin/dev` when the tag does not exist yet
 bun install --frozen-lockfile  # only if package.json / bun.lock changed
 ./script/fork-build.sh         # re-copies the official CLI, rebuilds and installs the AppImage
 git push --force-with-lease --no-verify mine sidebar
 ```
 
-Only the single `feat(app): project and worktree sidebar` commit sits on top of the tag, so the rebase is
-usually clean. `origin/dev` works too if you prefer the moving tip. If the official app is an AppImage
+The fork's commits sit on top of the tag, so a rebase can conflict where upstream moved the shell,
+Home, the inbox or the timeline. [`ACTUALIZAR.md`](./ACTUALIZAR.md) lists the points to keep when it
+does. `origin/dev` works too if you prefer the moving tip. If the official app is an AppImage
 instead of `/opt/OpenCode`, point the script at its CLI with
 `OPENCODE_CLI_SOURCE=/path/to/resources/opencode-cli ./script/fork-build.sh`.
 

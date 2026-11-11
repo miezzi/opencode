@@ -9,7 +9,8 @@ Guía corta de operación. El diseño y el detalle de cada cambio están en [`FO
 - Se abre desde el buscador de aplicaciones como **OpenCode Dev**; la entrada
   `~/.local/share/applications/ai.opencode.desktop.dev.desktop` apunta a esa ruta, así que sobrevive a
   cada rebuild.
-- Código: este repo, branch `sidebar`, **un solo commit** encima del tag de la app oficial.
+- Código: este repo, branch `sidebar`, con los commits del fork (la sidebar y sus fixes) encima del tag
+  de la app oficial.
 
 ## Actualizar (después de que se actualice la app oficial)
 
@@ -20,7 +21,7 @@ git fetch --tags origin
 # Versión que corre la app oficial; el rebase va al tag que le corresponde.
 cat /opt/OpenCode/resources/opencode-cli.version
 
-git rebase v2.2.5          # o origin/dev si el tag todavía no existe
+git rebase v2.2.7          # o origin/dev si el tag todavía no existe
 bun install --frozen-lockfile
 
 ./script/fork-build.sh     # recompila y reemplaza ~/Apps/OpenCode-Dev.AppImage
@@ -65,13 +66,19 @@ cerralo sin aceptar y volvé a correr `./script/fork-build.sh`.
 
 ## Si el rebase tiene conflictos
 
-El commit toca, sobre todo, `packages/app/src/shell/shell.tsx`, `packages/app/src/sidebar/` y
-`packages/app/src/home/`. Si upstream volvió a mover el shell, resolvé a mano manteniendo estos puntos:
+Los commits del fork tocan, sobre todo, `packages/app/src/shell/shell.tsx`,
+`packages/app/src/shell/titlebar/inbox.tsx`, `packages/app/src/sidebar/`,
+`packages/app/src/home/` y `packages/app/src/session/timeline/`. Si upstream volvió a mover esas piezas,
+resolvé a mano manteniendo estos puntos:
 
 1. `HomeDataProvider` + `SidebarProvider` envuelven `<Shell>` en `shell/routes/routes.tsx`.
 2. La columna vive en `shell.tsx`: tabs arriba (`sidebar.tabsHeight`), divisor, árbol abajo.
 3. `Home` consume `useHomeData()` y `useSidebar()` en vez de crear los controllers.
 4. El comando de la columna es `sidebar.toggle` (de upstream); el árbol usa `sidebar.tree.toggle`.
+5. El timeline completa el turno inicial hasta 20 páginas cuando `showTurnDiffs` está activo
+   (`pageLimit` en la máquina de sync); sin eso, un turno largo no llega al prompt que abrió el
+   resumen de archivos.
+6. El resumen de archivos cae a las herramientas `edit`/`write`/`patch` cuando no hay snapshots de Git.
 
 ## Atajos y comportamiento
 
@@ -104,7 +111,7 @@ El commit toca, sobre todo, `packages/app/src/shell/shell.tsx`, `packages/app/sr
 cd /media/miezzi/data_linux/Source/opencode
 git rebase --abort            # si quedó a mitad de rebase
 git checkout sidebar
-git log --oneline -3          # debería ser un commit sobre el tag
+git log --oneline -3          # deberían ser los commits del fork sobre el tag
 ```
 
 Volver a un AppImage anterior: `~/Apps/OpenCode-Dev.AppImage` no guarda historial, así que se recompila con
