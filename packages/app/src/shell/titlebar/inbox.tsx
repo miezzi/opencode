@@ -153,7 +153,7 @@ export function SidebarInbox() {
   // The Inbox replaces the vertical tab strip, so the same unread session shortcuts cycle its rows. Done and Failed
   // are the finished rows no client has viewed yet.
   const cycleUnread = (offset: -1 | 1) => {
-    const list = sections().inbox
+    const list = sections().unread
     const current = list.findIndex((entry) => inbox.selected(entry))
     const start = current === -1 ? (offset === 1 ? -1 : 0) : current
 
@@ -214,6 +214,7 @@ export function SidebarInbox() {
         <Show when={inbox.byKey().get(key)}>
           {(entry) => (
             <InboxSessionCard
+              sessionID={entry().session.id}
               project={entry().ctx.projects.forSession(entry().session)}
               directory={entry().session.location.directory}
               title={entry().session.title}
@@ -615,6 +616,7 @@ function SectionHeader(props: {
 }
 
 export function InboxSessionCard(props: {
+  sessionID?: string
   project?: LocalProject
   directory: string
   title?: string
@@ -668,7 +670,7 @@ export function InboxSessionCard(props: {
         tabIndex={navigation ? (navigation() === id ? 0 : -1) : 0}
         aria-current={props.selected ? "page" : undefined}
         data-slot="sidebar-inbox-item"
-        data-inbox-session={props.entry.session.id}
+        data-inbox-session={props.sessionID}
         data-status={status()}
         data-state={props.selected ? "active" : undefined}
         class="group flex h-[54px] w-full shrink-0 flex-col gap-1.5 rounded-[6px] p-2 text-start hover:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none focus-visible:bg-v2-overlay-simple-overlay-hover data-[state=active]:bg-v2-overlay-simple-overlay-pressed"

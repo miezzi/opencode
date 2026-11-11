@@ -191,6 +191,7 @@ function SidebarSessionRow(props: {
             fallback={getRelativeTime(
               new Date(props.record.session.time.updated ?? props.record.session.time.created).toISOString(),
               language.t,
+              language.intl(),
             )}
           >
             <ActivityRing />
@@ -601,7 +602,8 @@ export function Sidebar() {
 
     if (!connection) return
 
-    home.selection.set({ server: ServerConnection.key(connection), directory: project.project.worktree })
+    home.selection.focusServer(connection)
+    home.project.select(connection, project.project.worktree)
     navigate("/")
   }
 
