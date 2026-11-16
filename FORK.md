@@ -87,7 +87,7 @@ The short, step-by-step operator guide (Spanish, also copied to `~/Apps/OpenCode
 ```bash
 git fetch origin --tags
 cat /opt/OpenCode/resources/opencode-cli.version   # the version the official app runs
-git rebase v2.2.7              # the matching tag; `origin/dev` when the tag does not exist yet
+git rebase v2.3.0              # the matching tag; `origin/dev` when the tag does not exist yet
 bun install --frozen-lockfile  # only if package.json / bun.lock changed
 ./script/fork-build.sh         # re-copies the official CLI, rebuilds and installs the AppImage
 git push --force-with-lease --no-verify mine sidebar

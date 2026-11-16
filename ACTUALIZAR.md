@@ -21,7 +21,7 @@ git fetch --tags origin
 # Versión que corre la app oficial; el rebase va al tag que le corresponde.
 cat /opt/OpenCode/resources/opencode-cli.version
 
-git rebase v2.2.7          # o origin/dev si el tag todavía no existe
+git rebase v2.3.0          # o origin/dev si el tag todavía no existe
 bun install --frozen-lockfile
 
 ./script/fork-build.sh     # recompila y reemplaza ~/Apps/OpenCode-Dev.AppImage
