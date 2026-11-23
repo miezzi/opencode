@@ -158,6 +158,8 @@ function HomeStory(props: HomeArgs) {
       records,
       groups: createMemo(() => groupSessions(records(), language)),
       searchRecords: records,
+      indexed: () => (state.scenario === "populated" ? state.sessions : []),
+      archived: () => [],
       loading: () => state.scenario === "loading",
       retry: () => setState("scenario", "populated"),
     },
