@@ -89,11 +89,12 @@ resolvé a mano manteniendo estos puntos:
 - `Ctrl+Shift+B` muestra u oculta la columna entera (también el toggle del header de tabs, View › Toggle
   Sidebar y la paleta).
 - `F9` minimiza solo el árbol —las tabs quedan arriba— y `F9` lo vuelve a mostrar. También lo restauran
-  `Ctrl+B`, `Ctrl+Shift+F` y `Ctrl+Shift+G`.
+  `Ctrl+B` y `Ctrl+Shift+G`.
 - `Ctrl+B` lleva el foco al árbol. Después: `↑`/`↓` mover, `→` expandir/entrar, `←` colapsar/volver al
   padre, `Enter` abrir la sesión (o expandir un grupo), `Home`/`End`, `Esc` salir.
-- `Ctrl+Shift+G` va desde el chat a la fila de esa sesión; `Ctrl+Shift+F` al buscador del sidebar;
-  `Ctrl+Alt+A` a las sesiones activas; `Ctrl+Shift+M` al composer.
+- `Ctrl+Shift+G` va desde el chat a la fila de esa sesión; `Ctrl+Alt+A` a las sesiones activas;
+  `Ctrl+Shift+M` al composer. El buscador del árbol se abre con click o desde la paleta (sin atajo, para
+  no pisar el `Ctrl+Shift+F` de búsqueda global).
 - En el layout de tabs **Inbox**, `Shift+Alt+↓` y `Shift+Alt+↑` recorren las filas **Done/Failed** que
   todavía no leíste; las abre y las marca leídas.
 - Buscador debajo del nav: filtra proyectos, worktrees y sesiones; `Esc` limpia.

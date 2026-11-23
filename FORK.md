@@ -25,7 +25,7 @@ The tab sidebar and the tree share one left column, tabs on top:
 ┌ tabs ───────────────────┐  ← upstream's vertical tabs, height from `tabsHeight`
 │                         │
 ├──────── divider ────────┤  ← drag to resize; the height persists
-│ [search]                │  ← Ctrl+Shift+F
+│ [search]                │  ← click to filter; no keybind (Ctrl+Shift+F is the global session search)
 │ Projects              + │  ← the project/worktree/session tree
 │   …                     │
 └─────────────────────────┘
@@ -36,7 +36,7 @@ The tab sidebar and the tree share one left column, tabs on top:
 - One toggle for the whole column: `Ctrl+Shift+B`, the tab header's toggle, and View ›
   Toggle Sidebar all show or hide tabs and tree together.
 - The tree also folds on its own: the row at its foot (or `F9`) hides only the tree and gives the
-  space back to the tabs. `F9`, `Ctrl+B`, `Ctrl+Shift+F` and `Ctrl+Shift+G` restore it. Settings
+  space back to the tabs. `F9`, `Ctrl+B` and `Ctrl+Shift+G` restore it. Settings
   and Help are not in the tree; they stay in Home and the mobile tabs menu.
 - The tree is deliberately bare: it holds only its search field, the projects header, the tree
   itself and the Minimize row. Home, session search and new session stay in the tab section above,
@@ -121,7 +121,7 @@ cd opencode && bun install && ./script/fork-build.sh
 - Hidden below 1024px (the mobile layout keeps its own navigation).
 - Shows the focused server only.
 - Sessions come from the same 64-per-directory index Home uses; older sessions are not listed. The Projects
-  tree shows only the last month: `Ctrl+Shift+F` still searches everything in the index, older sessions
+  tree shows only the last month: its search field still searches everything in the index, older sessions
   included, and the counts next to each project follow the visible window.
 - Hover a project, worktree or session for its row actions, with tooltips: `+` starts a session in that
   project or worktree and `×` removes the row. Right-click the row and pick "Remove … from sidebar" for
@@ -148,9 +148,11 @@ cd opencode && bun install && ./script/fork-build.sh
   the 50 most recently archived sessions; the "Archived sessions" row in the sidebar footer opens a
   server-side search over every archived session, and opening one restores it.
 - `Ctrl+B` focuses the sidebar, `Ctrl+Shift+G` jumps from the open chat to that session's row (opening
-  and unhiding the tree on the way), `Ctrl+Shift+F` jumps to its search field, `Ctrl+Alt+A` jumps to the
+  and unhiding the tree on the way), `Ctrl+Alt+A` jumps to the
   Active list (expanded, first running or attention session focused) and `Ctrl+Shift+M` focuses the chat
-  composer, so you can move around without the mouse. `F9` folds or restores just the tree, even with
+  composer, so you can move around without the mouse. The tree's search field has no keybind of its own:
+  clicking it, or picking its command in the palette, keeps `Ctrl+Shift+F` free for the global session
+  search. `F9` folds or restores just the tree, even with
   the composer focused. In the Inbox tab layout, `Shift+Alt+↓` and `Shift+Alt+↑` cycle the Done/Failed
   rows that have not been read yet.
 - These are ordinary commands, so **Settings → Shortcuts → Navigation** lists them with their current

@@ -250,7 +250,6 @@ export function Sidebar() {
       id: "sidebar.search",
       title: language.t("sidebar.search.command"),
       section: "navigation",
-      keybind: "mod+shift+f",
       onSelect: () => {
         showTree()
 
@@ -1165,7 +1164,11 @@ export function Sidebar() {
           <Show
             when={query()}
             fallback={
-              <span class="shrink-0 pe-1 text-[10px] text-v2-text-text-faint">{command.keybind("sidebar.search")}</span>
+              <Show when={command.keybind("sidebar.search")}>
+                <span class="shrink-0 pe-1 text-[10px] text-v2-text-text-faint">
+                  {command.keybind("sidebar.search")}
+                </span>
+              </Show>
             }
           >
             <IconButton
