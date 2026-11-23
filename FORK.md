@@ -115,7 +115,9 @@ cd opencode && bun install && ./script/fork-build.sh
   project's context menu, not when the window regains focus (focus only re-reads the saved inventory,
   so it never reorders the tree). Its sessions stay reachable from Home and search.
 - The first run expands the most recently active project; projects without sessions stay behind a
-  "Show N more projects" row until you ask for them.
+  "Show N more projects" row until you ask for them. The shelf itself keeps the order each project first
+  took: activity bumps a project's server time and would otherwise move its whole subtree to the front
+  whenever a session runs, so the tree never re-sorts under the pointer. New projects append at the end.
 - Hidden below 1024px (the mobile layout keeps its own navigation).
 - Shows the focused server only.
 - Sessions come from the same 64-per-directory index Home uses; older sessions are not listed. The Projects

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import type { SessionInfo } from "@opencode/client/promise"
 import type { HomeSessionRecord } from "@/home/sessions/records"
 import type { LocalProject } from "@/shell/state/layout"
-import { groupSidebarProjects } from "./group"
+import { groupSidebarProjects, nextProjectOrder, orderSidebarProjects } from "./group"
 
 // SAFETY: the grouping code only reads the project fields the fixture sets.
 const project = (id: string, worktree: string, sandboxes: string[] = []) =>
@@ -133,5 +133,29 @@ describe("groupSidebarProjects", () => {
     })
 
     expect(groups.map((group) => group.name)).toEqual(["second", "first"])
+  })
+
+  test("keeps a saved project order when activity re-lists the projects", () => {
+    const first = project("first", "/repo/first")
+    const second = project("second", "/repo/second")
+    const order = ["/repo/first", "/repo/second"]
+
+    const arranged = (projects: LocalProject[]) =>
+      orderSidebarProjects(groupSidebarProjects({ projects, records: [] }), order).map((group) => group.key)
+
+    // The server lists projects most recently active first; a session running in another project must not
+    // reorder the shelf.
+    expect(arranged([second, first])).toEqual(order)
+    expect(arranged([first, second])).toEqual(order)
+  })
+
+  test("appends projects the saved order has not seen instead of re-sorting the rest", () => {
+    const ordered = project("ordered", "/repo/ordered")
+    const added = project("added", "/repo/added")
+
+    const groups = groupSidebarProjects({ projects: [added, ordered], records: [] })
+
+    expect(nextProjectOrder(["/repo/ordered"], groups)).toEqual(["/repo/ordered", "/repo/added"])
+    expect(nextProjectOrder(["/repo/ordered", "/repo/added"], groups)).toEqual(["/repo/ordered", "/repo/added"])
   })
 })

@@ -70,8 +70,29 @@ export function worktreeForSession(directory: string, directories: readonly stri
 }
 
 /**
- * Builds the sidebar tree: project -> worktree -> sessions. Projects keep the order the user set on Home
- * (projects without sessions stay selectable), worktrees sort main first and then by most recent activity.
+ * Keeps every project in the slot it first took. The server lists projects by last activity, and any Location
+ * boot or running session bumps that time again, so a shelf that follows it re-sorts under the pointer. Projects
+ * the saved order has not seen yet append in the order they arrived; the caller then saves the result.
+ */
+export function orderSidebarProjects(projects: readonly SidebarProject[], order: readonly string[]) {
+  const slots = new Map(order.map((key, index) => [key, index] as const))
+
+  return projects
+    .map((project, index) => ({ project, slot: slots.get(project.key) ?? order.length + index }))
+    .toSorted((a, b) => a.slot - b.slot)
+    .map((entry) => entry.project)
+}
+
+/** The order to save for the next render: known keys keep their slot, unseen projects append as they arrived. */
+export function nextProjectOrder(order: readonly string[], projects: readonly SidebarProject[]) {
+  const known = new Set(order)
+
+  return [...order, ...projects.flatMap((project) => (known.has(project.key) ? [] : [project.key]))]
+}
+
+/**
+ * Builds the sidebar tree: project -> worktree -> sessions. Projects keep the order they were given (projects
+ * without sessions stay selectable), worktrees sort main first and then by most recent activity.
  */
 export function groupSidebarProjects(input: {
   projects: readonly LocalProject[]

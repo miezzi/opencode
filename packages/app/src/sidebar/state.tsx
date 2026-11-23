@@ -11,6 +11,8 @@ const SidebarState = Persistence.struct({
   treeOpen: Schema.Boolean,
   seeded: Schema.Boolean,
   projects: Schema.Array(Schema.String),
+  /** Project keys in the order the tree first showed them, so activity never re-sorts the shelf. */
+  order: Schema.Array(Schema.String),
   worktrees: Schema.Array(Schema.String),
   pinnedSessions: Schema.Array(Schema.String),
   hiddenProjects: Schema.Array(Schema.String),
@@ -36,6 +38,7 @@ export const { use: useSidebar, provider: SidebarProvider } = createSimpleContex
       treeOpen: true,
       seeded: false,
       projects: [],
+      order: [],
       worktrees: [],
       pinnedSessions: [],
       hiddenProjects: [],

@@ -30,7 +30,7 @@ import { notifySessionTabsRemoved } from "@/shell/titlebar/session-events"
 import { useLayout } from "@/shell/state/layout"
 import { SessionTabAvatarView } from "@/shell/layout/session-tab-avatar"
 import { getRelativeTime } from "@/shell/time"
-import { type SidebarProject, type SidebarWorktree, SIDEBAR_SESSION_PAGE, groupSidebarProjects } from "./group"
+import { type SidebarProject, type SidebarWorktree, SIDEBAR_SESSION_PAGE, groupSidebarProjects, nextProjectOrder, orderSidebarProjects } from "./group"
 import { type SidebarRow, sidebarRows } from "./rows"
 import { groupSessionsByBucket, type SessionBucket } from "./time"
 import { useSidebar } from "./state"
@@ -285,12 +285,25 @@ export function Sidebar() {
     }),
   )
 
-  const fullTree = createMemo(() =>
+  const groupedTree = createMemo(() =>
     groupSidebarProjects({
       projects: home.project.list(),
       records: records(),
     }),
   )
+
+  // Activity bumps each project's server time and re-lists the shelf; the tree keeps the slot each project first
+  // took, so a running session or a window coming back never moves rows under the pointer.
+  const fullTree = createMemo(() => orderSidebarProjects(groupedTree(), sidebar.state.order))
+
+  createEffect(() => {
+    if (!sidebar.ready()) return
+    const order = sidebar.state.order
+    const next = nextProjectOrder(order, groupedTree())
+
+    if (next.length !== order.length || next.some((key, index) => key !== order[index]))
+      sidebar.setState("order", next)
+  })
 
   // The Projects tree lists the last month only. The index keeps its full retention, so search still reaches
   // older sessions; this is a presentation window, not a smaller load.
